@@ -68,6 +68,7 @@ type AgentStartConfig struct {
 	Debug                     bool     `cli:"debug"`
 	DebugHTTP                 bool     `cli:"debug-http"`
 	Experiments               []string `cli:"experiment"`
+	Workers                   int      `cli:"workers"`
 
 	/* Deprecated */
 	NoSSHFingerprintVerification bool     `cli:"no-automatic-ssh-fingerprint-verification" deprecated-and-renamed-to:"NoSSHKeyscan"`
@@ -259,6 +260,12 @@ var AgentStartCommand = cli.Command{
 			Usage:  "Don't automatically checkout git submodules",
 			EnvVar: "BUILDKITE_NO_GIT_SUBMODULES,BUILDKITE_DISABLE_GIT_SUBMODULES",
 		},
+		cli.IntFlag{
+			Name:   "workers",
+			Usage:  "The number of parallel workers to run within this agent",
+			Value:  1,
+			EnvVar: "BUILDKITE_AGENT_WORKERS",
+		},
 		ExperimentsFlag,
 		EndpointFlag,
 		NoColorFlag,
@@ -357,6 +364,7 @@ var AgentStartCommand = cli.Command{
 			TagsFromGCP:           cfg.TagsFromGCP,
 			WaitForEC2TagsTimeout: ec2TagTimeout,
 			Endpoint:              cfg.Endpoint,
+			Workers:               cfg.Workers,
 			AgentConfiguration: &agent.AgentConfiguration{
 				BootstrapScript:           cfg.BootstrapScript,
 				BuildPath:                 cfg.BuildPath,
