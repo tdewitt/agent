@@ -829,8 +829,11 @@ func (b *Bootstrap) defaultCheckoutPhase() error {
 		}
 	}
 
-	if _, hasToken := b.shell.Env.Get("BUILDKITE_AGENT_ACCESS_TOKEN"); !hasToken {
-		b.shell.Warningf("Skipping sending Git information to Buildkite as $BUILDKITE_AGENT_ACCESS_TOKEN is missing")
+	_, hasToken := b.shell.Env.Get("BUILDKITE_AGENT_ACCESS_TOKEN")
+	_, hasSocket := b.shell.Env.Get("BUILDKITE_AGENT_SOCKET")
+
+	if !hasToken && !hasSocket {
+		b.shell.Warningf("Skipping sending Git information to Buildkite as $BUILDKITE_AGENT_ACCESS_TOKEN and $BUILDKITE_AGENT_SOCKET is missing")
 		return nil
 	}
 
