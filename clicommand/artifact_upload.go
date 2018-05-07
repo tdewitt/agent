@@ -37,14 +37,13 @@ Example:
    $ buildkite-agent artifact upload "log/**/*.log" gs://name-of-your-gs-bucket/$BUILDKITE_JOB_ID`
 
 type ArtifactUploadConfig struct {
-	UploadPaths      string `cli:"arg:0" label:"upload paths" validate:"required"`
-	Destination      string `cli:"arg:1" label:"destination" env:"BUILDKITE_ARTIFACT_UPLOAD_DESTINATION"`
-	Job              string `cli:"job" validate:"required"`
-	AgentAccessToken string `cli:"agent-access-token" validate:"required"`
-	Endpoint         string `cli:"endpoint" validate:"required"`
-	NoColor          bool   `cli:"no-color"`
-	Debug            bool   `cli:"debug"`
-	DebugHTTP        bool   `cli:"debug-http"`
+	UploadPaths string `cli:"arg:0" label:"upload paths" validate:"required"`
+	Destination string `cli:"arg:1" label:"destination" env:"BUILDKITE_ARTIFACT_UPLOAD_DESTINATION"`
+	Job         string `cli:"job" validate:"required"`
+	AgentSocket string `cli:"agent-socket" validate:"required"`
+	NoColor     bool   `cli:"no-color"`
+	Debug       bool   `cli:"debug"`
+	DebugHTTP   bool   `cli:"debug-http"`
 }
 
 var ArtifactUploadCommand = cli.Command{
@@ -58,8 +57,7 @@ var ArtifactUploadCommand = cli.Command{
 			Usage:  "Which job should the artifacts be uploaded to",
 			EnvVar: "BUILDKITE_JOB_ID",
 		},
-		AgentAccessTokenFlag,
-		EndpointFlag,
+		AgentSocketFlag,
 		NoColorFlag,
 		DebugFlag,
 		DebugHTTPFlag,
@@ -76,12 +74,12 @@ var ArtifactUploadCommand = cli.Command{
 		// Setup the any global configuration options
 		HandleGlobalFlags(cfg)
 
+		// Create the API client
+		client := agent.APIClient{}.CreateFromSocket(cfg.AgentSocket)
+
 		// Setup the uploader
 		uploader := agent.ArtifactUploader{
-			APIClient: agent.APIClient{
-				Endpoint: cfg.Endpoint,
-				Token:    cfg.AgentAccessToken,
-			}.Create(),
+			APIClient:   client,
 			JobID:       cfg.Job,
 			Paths:       cfg.UploadPaths,
 			Destination: cfg.Destination,

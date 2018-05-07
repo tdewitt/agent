@@ -26,13 +26,12 @@ Example:
    $ buildkite-agent meta-data exists "foo"`
 
 type MetaDataExistsConfig struct {
-	Key              string `cli:"arg:0" label:"meta-data key" validate:"required"`
-	Job              string `cli:"job" validate:"required"`
-	AgentAccessToken string `cli:"agent-access-token" validate:"required"`
-	Endpoint         string `cli:"endpoint" validate:"required"`
-	NoColor          bool   `cli:"no-color"`
-	Debug            bool   `cli:"debug"`
-	DebugHTTP        bool   `cli:"debug-http"`
+	Key         string `cli:"arg:0" label:"meta-data key" validate:"required"`
+	Job         string `cli:"job" validate:"required"`
+	AgentSocket string `cli:"agent-socket" validate:"required"`
+	NoColor     bool   `cli:"no-color"`
+	Debug       bool   `cli:"debug"`
+	DebugHTTP   bool   `cli:"debug-http"`
 }
 
 var MetaDataExistsCommand = cli.Command{
@@ -46,8 +45,7 @@ var MetaDataExistsCommand = cli.Command{
 			Usage:  "Which job should the meta-data be checked for",
 			EnvVar: "BUILDKITE_JOB_ID",
 		},
-		AgentAccessTokenFlag,
-		EndpointFlag,
+		AgentSocketFlag,
 		NoColorFlag,
 		DebugFlag,
 		DebugHTTPFlag,
@@ -65,10 +63,7 @@ var MetaDataExistsCommand = cli.Command{
 		HandleGlobalFlags(cfg)
 
 		// Create the API client
-		client := agent.APIClient{
-			Endpoint: cfg.Endpoint,
-			Token:    cfg.AgentAccessToken,
-		}.Create()
+		client := agent.APIClient{}.CreateFromSocket(cfg.AgentSocket)
 
 		// Find the meta data value
 		var err error

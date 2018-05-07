@@ -37,14 +37,13 @@ Example:
    You can also use the step's job id (provided by the environment variable $BUILDKITE_JOB_ID)`
 
 type ArtifactShasumConfig struct {
-	Query            string `cli:"arg:0" label:"artifact search query" validate:"required"`
-	Step             string `cli:"step"`
-	Build            string `cli:"build" validate:"required"`
-	AgentAccessToken string `cli:"agent-access-token" validate:"required"`
-	Endpoint         string `cli:"endpoint" validate:"required"`
-	NoColor          bool   `cli:"no-color"`
-	Debug            bool   `cli:"debug"`
-	DebugHTTP        bool   `cli:"debug-http"`
+	Query       string `cli:"arg:0" label:"artifact search query" validate:"required"`
+	Step        string `cli:"step"`
+	Build       string `cli:"build" validate:"required"`
+	AgentSocket string `cli:"agent-socket" validate:"required"`
+	NoColor     bool   `cli:"no-color"`
+	Debug       bool   `cli:"debug"`
+	DebugHTTP   bool   `cli:"debug-http"`
 }
 
 var ArtifactShasumCommand = cli.Command{
@@ -63,8 +62,7 @@ var ArtifactShasumCommand = cli.Command{
 			EnvVar: "BUILDKITE_BUILD_ID",
 			Usage:  "The build that the artifacts were uploaded to",
 		},
-		AgentAccessTokenFlag,
-		EndpointFlag,
+		AgentSocketFlag,
 		NoColorFlag,
 		DebugFlag,
 		DebugHTTPFlag,
@@ -81,13 +79,13 @@ var ArtifactShasumCommand = cli.Command{
 		// Setup the any global configuration options
 		HandleGlobalFlags(cfg)
 
+		// Create the API client
+		client := agent.APIClient{}.CreateFromSocket(cfg.AgentSocket)
+
 		// Find the artifact we want to show the SHASUM for
 		searcher := agent.ArtifactSearcher{
-			APIClient: agent.APIClient{
-				Endpoint: cfg.Endpoint,
-				Token:    cfg.AgentAccessToken,
-			}.Create(),
-			BuildID: cfg.Build,
+			APIClient: client,
+			BuildID:   cfg.Build,
 		}
 
 		artifacts, err := searcher.Search(cfg.Query, cfg.Step)

@@ -31,14 +31,13 @@ Example:
    $ ./script/meta-data-generator | buildkite-agent meta-data set "foo"`
 
 type MetaDataSetConfig struct {
-	Key              string `cli:"arg:0" label:"meta-data key" validate:"required"`
-	Value            string `cli:"arg:1" label:"meta-data value"`
-	Job              string `cli:"job" validate:"required"`
-	AgentAccessToken string `cli:"agent-access-token" validate:"required"`
-	Endpoint         string `cli:"endpoint" validate:"required"`
-	NoColor          bool   `cli:"no-color"`
-	Debug            bool   `cli:"debug"`
-	DebugHTTP        bool   `cli:"debug-http"`
+	Key         string `cli:"arg:0" label:"meta-data key" validate:"required"`
+	Value       string `cli:"arg:1" label:"meta-data value"`
+	Job         string `cli:"job" validate:"required"`
+	AgentSocket string `cli:"agent-socket" validate:"required"`
+	NoColor     bool   `cli:"no-color"`
+	Debug       bool   `cli:"debug"`
+	DebugHTTP   bool   `cli:"debug-http"`
 }
 
 var MetaDataSetCommand = cli.Command{
@@ -52,8 +51,7 @@ var MetaDataSetCommand = cli.Command{
 			Usage:  "Which job should the meta-data be set on",
 			EnvVar: "BUILDKITE_JOB_ID",
 		},
-		AgentAccessTokenFlag,
-		EndpointFlag,
+		AgentSocketFlag,
 		NoColorFlag,
 		DebugFlag,
 		DebugHTTPFlag,
@@ -82,10 +80,7 @@ var MetaDataSetCommand = cli.Command{
 		}
 
 		// Create the API client
-		client := agent.APIClient{
-			Endpoint: cfg.Endpoint,
-			Token:    cfg.AgentAccessToken,
-		}.Create()
+		client := agent.APIClient{}.CreateFromSocket(cfg.AgentSocket)
 
 		// Create the meta data to set
 		metaData := &api.MetaData{

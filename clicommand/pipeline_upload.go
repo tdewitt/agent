@@ -44,15 +44,14 @@ Example:
    $ ./script/dynamic_step_generator | buildkite-agent pipeline upload`
 
 type PipelineUploadConfig struct {
-	FilePath         string `cli:"arg:0" label:"upload paths"`
-	Replace          bool   `cli:"replace"`
-	Job              string `cli:"job" validate:"required"`
-	AgentAccessToken string `cli:"agent-access-token" validate:"required"`
-	Endpoint         string `cli:"endpoint" validate:"required"`
-	NoColor          bool   `cli:"no-color"`
-	NoInterpolation  bool   `cli:"no-interpolation"`
-	Debug            bool   `cli:"debug"`
-	DebugHTTP        bool   `cli:"debug-http"`
+	FilePath        string `cli:"arg:0" label:"upload paths"`
+	Replace         bool   `cli:"replace"`
+	Job             string `cli:"job" validate:"required"`
+	AgentSocket     string `cli:"agent-socket" validate:"required"`
+	NoColor         bool   `cli:"no-color"`
+	NoInterpolation bool   `cli:"no-interpolation"`
+	Debug           bool   `cli:"debug"`
+	DebugHTTP       bool   `cli:"debug-http"`
 }
 
 var PipelineUploadCommand = cli.Command{
@@ -76,8 +75,7 @@ var PipelineUploadCommand = cli.Command{
 			Usage:  "Skip variable interpolation the pipeline when uploaded",
 			EnvVar: "BUILDKITE_PIPELINE_NO_INTERPOLATION",
 		},
-		AgentAccessTokenFlag,
-		EndpointFlag,
+		AgentSocketFlag,
 		NoColorFlag,
 		DebugFlag,
 		DebugHTTPFlag,
@@ -175,10 +173,7 @@ var PipelineUploadCommand = cli.Command{
 		}
 
 		// Create the API client
-		client := agent.APIClient{
-			Endpoint: cfg.Endpoint,
-			Token:    cfg.AgentAccessToken,
-		}.Create()
+		client := agent.APIClient{}.CreateFromSocket(cfg.AgentSocket)
 
 		// Generate a UUID that will identifiy this pipeline change. We
 		// do this outside of the retry loop because we want this UUID
@@ -190,9 +185,8 @@ var PipelineUploadCommand = cli.Command{
 			_, err = client.Pipelines.Upload(cfg.Job, &api.Pipeline{UUID: uuid, Pipeline: parsed, Replace: cfg.Replace})
 			if err != nil {
 				logger.Warn("%s (%s)", err, s)
-				apierr := err.(*api.ErrorResponse)
 				// 422 responses will always fail no need to retry
-				if apierr.Response.StatusCode == 422 {
+				if apierr, ok := err.(*api.ErrorResponse); ok && apierr.Response.StatusCode == 422 {
 					logger.Error("Unrecoverable error, skipping retries")
 					s.Break()
 				}

@@ -47,16 +47,15 @@ Example:
    $ ./script/dynamic_annotation_generator | buildkite-agent annotate --style "success"`
 
 type AnnotateConfig struct {
-	Body             string `cli:"arg:0" label:"annotation body"`
-	Style            string `cli:"style"`
-	Context          string `cli:"context"`
-	Append           bool   `cli:"append"`
-	Job              string `cli:"job" validate:"required"`
-	AgentAccessToken string `cli:"agent-access-token" validate:"required"`
-	Endpoint         string `cli:"endpoint" validate:"required"`
-	NoColor          bool   `cli:"no-color"`
-	Debug            bool   `cli:"debug"`
-	DebugHTTP        bool   `cli:"debug-http"`
+	Body        string `cli:"arg:0" label:"annotation body"`
+	Style       string `cli:"style"`
+	Context     string `cli:"context"`
+	Append      bool   `cli:"append"`
+	Job         string `cli:"job" validate:"required"`
+	AgentSocket string `cli:"agent-socket" validate:"required"`
+	NoColor     bool   `cli:"no-color"`
+	Debug       bool   `cli:"debug"`
+	DebugHTTP   bool   `cli:"debug-http"`
 }
 
 var AnnotateCommand = cli.Command{
@@ -85,8 +84,7 @@ var AnnotateCommand = cli.Command{
 			Usage:  "Which job should the annotation come from",
 			EnvVar: "BUILDKITE_JOB_ID",
 		},
-		AgentAccessTokenFlag,
-		EndpointFlag,
+		AgentSocketFlag,
 		NoColorFlag,
 		DebugFlag,
 		DebugHTTPFlag,
@@ -125,10 +123,7 @@ var AnnotateCommand = cli.Command{
 		body = strings.TrimSpace(body)
 
 		// Create the API client
-		client := agent.APIClient{
-			Endpoint: cfg.Endpoint,
-			Token:    cfg.AgentAccessToken,
-		}.Create()
+		client := agent.APIClient{}.CreateFromSocket(cfg.AgentSocket)
 
 		// Create the annotation we'll send to the Buildkite API
 		annotation := &api.Annotation{

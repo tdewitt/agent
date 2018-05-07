@@ -12,11 +12,11 @@ const (
 	DefaultEndpoint = "https://agent.buildkite.com/v3"
 )
 
-var AgentAccessTokenFlag = cli.StringFlag{
-	Name:   "agent-access-token",
+var AgentSocketFlag = cli.StringFlag{
+	Name:   "agent-socket",
 	Value:  "",
-	Usage:  "The access token used to identify the agent",
-	EnvVar: "BUILDKITE_AGENT_ACCESS_TOKEN",
+	Usage:  "The unix socket to connect to the agent api proxy on",
+	EnvVar: "BUILDKITE_AGENT_SOCKET",
 }
 
 var EndpointFlag = cli.StringFlag{
