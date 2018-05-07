@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/buildkite/agent/api"
+	"github.com/buildkite/agent/experiments"
 	"github.com/buildkite/agent/logger"
 	"github.com/buildkite/agent/process"
 	"github.com/buildkite/agent/retry"
@@ -74,8 +75,10 @@ func (r JobRunner) Create() (runner *JobRunner, err error) {
 	runner.logStreamer = LogStreamer{MaxChunkSizeBytes: r.Job.ChunksMaxSizeBytes, Callback: r.onUploadChunk}.New()
 
 	// Start a proxy to give to the job for api operations
-	if err := r.APIProxy.Listen(); err != nil {
-		return nil, err
+	if experiments.IsEnabled("agent-socket") {
+		if err := r.APIProxy.Listen(); err != nil {
+			return nil, err
+		}
 	}
 
 	// Prepare a file to recieve the given job environment
@@ -175,8 +178,10 @@ func (r *JobRunner) Run() error {
 	}
 
 	// Destroy the proxy
-	if err := r.APIProxy.Destroy(); err != nil {
-		logger.Warn("[JobRunner] Failed to destroy proxy: %v", err)
+	if experiments.IsEnabled("agent-socket") {
+		if err := r.APIProxy.Destroy(); err != nil {
+			logger.Warn("[JobRunner] Failed to destroy proxy: %v", err)
+		}
 	}
 
 	logger.Info("Finished job %s", r.Job.ID)
@@ -228,8 +233,14 @@ func (r *JobRunner) createEnvironment() ([]string, error) {
 		env["BUILDKITE_ENV_FILE"] = r.envFile.Name()
 	}
 
+	if experiments.IsEnabled("agent-socket") {
+		env["BUILDKITE_AGENT_SOCKET"] = r.APIProxy.Socket()
+	} else {
+		env["BUILDKITE_AGENT_ENDPOINT"] = r.Endpoint
+		env["BUILDKITE_AGENT_ACCESS_TOKEN"] = r.Agent.AccessToken
+	}
+
 	// Add agent environment variables
-	env["BUILDKITE_AGENT_SOCKET"] = r.APIProxy.Socket()
 	env["BUILDKITE_AGENT_DEBUG"] = fmt.Sprintf("%t", logger.GetLevel() == logger.DEBUG)
 	env["BUILDKITE_AGENT_PID"] = fmt.Sprintf("%d", os.Getpid())
 

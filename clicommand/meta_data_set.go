@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/buildkite/agent/agent"
 	"github.com/buildkite/agent/api"
 	"github.com/buildkite/agent/cliconfig"
 	"github.com/buildkite/agent/logger"
@@ -31,13 +30,15 @@ Example:
    $ ./script/meta-data-generator | buildkite-agent meta-data set "foo"`
 
 type MetaDataSetConfig struct {
-	Key         string `cli:"arg:0" label:"meta-data key" validate:"required"`
-	Value       string `cli:"arg:1" label:"meta-data value"`
-	Job         string `cli:"job" validate:"required"`
-	AgentSocket string `cli:"agent-socket" validate:"required"`
-	NoColor     bool   `cli:"no-color"`
-	Debug       bool   `cli:"debug"`
-	DebugHTTP   bool   `cli:"debug-http"`
+	Key              string `cli:"arg:0" label:"meta-data key" validate:"required"`
+	Value            string `cli:"arg:1" label:"meta-data value"`
+	Job              string `cli:"job" validate:"required"`
+	AgentSocket      string `cli:"agent-socket"`
+	AgentAccessToken string `cli:"agent-access-token"`
+	Endpoint         string `cli:"endpoint"`
+	NoColor          bool   `cli:"no-color"`
+	Debug            bool   `cli:"debug"`
+	DebugHTTP        bool   `cli:"debug-http"`
 }
 
 var MetaDataSetCommand = cli.Command{
@@ -52,6 +53,8 @@ var MetaDataSetCommand = cli.Command{
 			EnvVar: "BUILDKITE_JOB_ID",
 		},
 		AgentSocketFlag,
+		AgentAccessTokenFlag,
+		EndpointFlag,
 		NoColorFlag,
 		DebugFlag,
 		DebugHTTPFlag,
@@ -80,7 +83,7 @@ var MetaDataSetCommand = cli.Command{
 		}
 
 		// Create the API client
-		client := agent.APIClient{}.CreateFromSocket(cfg.AgentSocket)
+		client := CreateAPIClient(cfg)
 
 		// Create the meta data to set
 		metaData := &api.MetaData{

@@ -34,14 +34,16 @@ Example:
    You can also use the step's jobs id (provided by the environment variable $BUILDKITE_JOB_ID)`
 
 type ArtifactDownloadConfig struct {
-	Query       string `cli:"arg:0" label:"artifact search query" validate:"required"`
-	Destination string `cli:"arg:1" label:"artifact download path" validate:"required"`
-	Step        string `cli:"step"`
-	Build       string `cli:"build" validate:"required"`
-	AgentSocket string `cli:"agent-socket" validate:"required"`
-	NoColor     bool   `cli:"no-color"`
-	Debug       bool   `cli:"debug"`
-	DebugHTTP   bool   `cli:"debug-http"`
+	Query            string `cli:"arg:0" label:"artifact search query" validate:"required"`
+	Destination      string `cli:"arg:1" label:"artifact download path" validate:"required"`
+	Step             string `cli:"step"`
+	Build            string `cli:"build" validate:"required"`
+	AgentSocket      string `cli:"agent-socket"`
+	AgentAccessToken string `cli:"agent-access-token"`
+	Endpoint         string `cli:"endpoint"`
+	NoColor          bool   `cli:"no-color"`
+	Debug            bool   `cli:"debug"`
+	DebugHTTP        bool   `cli:"debug-http"`
 }
 
 var ArtifactDownloadCommand = cli.Command{
@@ -61,6 +63,8 @@ var ArtifactDownloadCommand = cli.Command{
 			Usage:  "The build that the artifacts were uploaded to",
 		},
 		AgentSocketFlag,
+		AgentAccessTokenFlag,
+		EndpointFlag,
 		NoColorFlag,
 		DebugFlag,
 		DebugHTTPFlag,
@@ -78,7 +82,7 @@ var ArtifactDownloadCommand = cli.Command{
 		HandleGlobalFlags(cfg)
 
 		// Create the API client
-		client := agent.APIClient{}.CreateFromSocket(cfg.AgentSocket)
+		client := CreateAPIClient(cfg)
 
 		// Setup the downloader
 		downloader := agent.ArtifactDownloader{

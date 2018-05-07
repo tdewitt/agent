@@ -44,14 +44,16 @@ Example:
    $ ./script/dynamic_step_generator | buildkite-agent pipeline upload`
 
 type PipelineUploadConfig struct {
-	FilePath        string `cli:"arg:0" label:"upload paths"`
-	Replace         bool   `cli:"replace"`
-	Job             string `cli:"job" validate:"required"`
-	AgentSocket     string `cli:"agent-socket" validate:"required"`
-	NoColor         bool   `cli:"no-color"`
-	NoInterpolation bool   `cli:"no-interpolation"`
-	Debug           bool   `cli:"debug"`
-	DebugHTTP       bool   `cli:"debug-http"`
+	FilePath         string `cli:"arg:0" label:"upload paths"`
+	Replace          bool   `cli:"replace"`
+	Job              string `cli:"job" validate:"required"`
+	AgentSocket      string `cli:"agent-socket"`
+	AgentAccessToken string `cli:"agent-access-token"`
+	Endpoint         string `cli:"endpoint"`
+	NoColor          bool   `cli:"no-color"`
+	NoInterpolation  bool   `cli:"no-interpolation"`
+	Debug            bool   `cli:"debug"`
+	DebugHTTP        bool   `cli:"debug-http"`
 }
 
 var PipelineUploadCommand = cli.Command{
@@ -76,6 +78,8 @@ var PipelineUploadCommand = cli.Command{
 			EnvVar: "BUILDKITE_PIPELINE_NO_INTERPOLATION",
 		},
 		AgentSocketFlag,
+		AgentAccessTokenFlag,
+		EndpointFlag,
 		NoColorFlag,
 		DebugFlag,
 		DebugHTTPFlag,
@@ -173,7 +177,7 @@ var PipelineUploadCommand = cli.Command{
 		}
 
 		// Create the API client
-		client := agent.APIClient{}.CreateFromSocket(cfg.AgentSocket)
+		client := CreateAPIClient(cfg)
 
 		// Generate a UUID that will identifiy this pipeline change. We
 		// do this outside of the retry loop because we want this UUID
